@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { flares, users } from "@/db/schema";
+import { flares, matches, users } from "@/db/schema";
 import { eq, and, gt, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -122,6 +122,15 @@ export async function POST(request: NextRequest) {
       expiresAt,
     })
     .returning();
+
+  // Auto-enroll the creator as an accepted match
+  const chatExpiresAt = new Date(expiresAt.getTime() + 48 * 60 * 60 * 1000);
+  await db.insert(matches).values({
+    flareId: flare.id,
+    responderId: user.id,
+    status: "accepted",
+    chatExpiresAt,
+  });
 
   return NextResponse.json(flare, { status: 201 });
 }
