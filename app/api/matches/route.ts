@@ -54,6 +54,11 @@ export async function GET(request: NextRequest) {
       responderId: matches.responderId,
       responderName: users.name,
       flareActivity: flares.activity,
+      // Extra flare fields so the responder's client can detect edits and
+      // decide whether to surface an "updated" notification without an N+1
+      // fetch per match.
+      flareTimeLabel: flares.timeLabel,
+      flareLocationName: flares.locationName,
       status: matches.status,
       chatExpiresAt: matches.chatExpiresAt,
       createdAt: matches.createdAt,
