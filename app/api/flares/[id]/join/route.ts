@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { flares, matches } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 // POST /api/flares/:id/join
 export async function POST(
@@ -13,6 +14,9 @@ export async function POST(
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const rl = rateLimit(`join:${user.id}`, 10, 60_000);
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
   const { id: flareId } = await params;
 

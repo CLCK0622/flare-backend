@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { matches, messages, flares } from "@/db/schema";
 import { eq, and, gt, asc } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 // GET /api/matches/:id/messages?after=2024-01-01T00:00:00Z
 export async function GET(
@@ -109,20 +110,35 @@ export async function POST(
     return NextResponse.json({ error: "Chat has expired" }, { status: 403 });
   }
 
-  const { text } = await request.json();
-  if (!text?.trim()) {
+  const rl = rateLimit(`msg:${user.id}`, 30, 60_000);
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
+
+  const body = await request.json();
+  const { text, imageUrl } = body;
+  const trimmed = typeof text === "string" ? text.trim() : "";
+  if (!trimmed) {
     return NextResponse.json(
       { error: "text is required" },
       { status: 400 }
     );
   }
+  if (trimmed.length > 2000) {
+    return NextResponse.json(
+      { error: "Message too long (max 2000 chars)" },
+      { status: 400 }
+    );
+  }
+
+  const clampedImageUrl =
+    typeof imageUrl === "string" ? imageUrl.slice(0, 500) : "";
 
   const [message] = await db
     .insert(messages)
     .values({
       matchId,
       senderId: user.id,
-      text: text.trim(),
+      text: trimmed,
+      imageUrl: clampedImageUrl,
     })
     .returning();
 

@@ -10,11 +10,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10) || 50, 100);
+
   const results = await db
     .select()
     .from(flares)
     .where(eq(flares.userId, user.id))
-    .orderBy(desc(flares.createdAt));
+    .orderBy(desc(flares.createdAt))
+    .limit(limit);
 
   return NextResponse.json(results);
 }
