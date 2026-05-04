@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
     .returning();
 
   const token = await signToken(user.id);
+  const { passwordHash: _, ...safeUser } = user;
 
-  return NextResponse.json({ token, user }, { status: 201 });
+  return NextResponse.json({ token, user: safeUser }, { status: 201 });
 }

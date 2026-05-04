@@ -35,8 +35,9 @@ export async function POST(request: NextRequest) {
     }
 
     const token = await signToken(user.id);
+    const { passwordHash: _, ...safeUser } = user;
 
-    return NextResponse.json({ token, user });
+    return NextResponse.json({ token, user: safeUser });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("dev auth error:", message);
