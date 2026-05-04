@@ -7,6 +7,7 @@ import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const VALID_VISIBILITY = ["public", "followers", "private"] as const;
 const VALID_THEME = ["light", "dark", "system"] as const;
+const VALID_LANGUAGE = ["en", "zh"] as const;
 
 const DEFAULTS = {
   notifyMatches: true,
@@ -14,6 +15,7 @@ const DEFAULTS = {
   notifyFlareEdits: true,
   profileVisibility: "public" as const,
   theme: "system" as const,
+  language: "en" as const,
 };
 
 // GET /api/settings — get current user's settings
@@ -67,6 +69,14 @@ export async function PUT(request: NextRequest) {
     );
   }
 
+  // Validate language if provided
+  if (body.language !== undefined && !VALID_LANGUAGE.includes(body.language)) {
+    return NextResponse.json(
+      { error: `language must be one of: ${VALID_LANGUAGE.join(", ")}` },
+      { status: 400 }
+    );
+  }
+
   // Build the set of fields to upsert
   const values: Record<string, unknown> = { userId: user.id };
   const setFields: Record<string, unknown> = { updatedAt: new Date() };
@@ -90,6 +100,10 @@ export async function PUT(request: NextRequest) {
   if (body.theme !== undefined) {
     values.theme = body.theme;
     setFields.theme = body.theme;
+  }
+  if (body.language !== undefined) {
+    values.language = body.language;
+    setFields.language = body.language;
   }
 
   const [row] = await db

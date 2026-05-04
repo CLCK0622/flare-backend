@@ -287,5 +287,6 @@ export const settings = pgTable("settings", {
   notifyFlareEdits: boolean("notify_flare_edits").default(true).notNull(),
   profileVisibility: varchar("profile_visibility", { length: 20 }).default("public").notNull(),
   theme: varchar("theme", { length: 20 }).default("system").notNull(),
+  language: varchar("language", { length: 10 }).default("en").notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
